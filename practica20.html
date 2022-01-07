@@ -1,0 +1,176 @@
+<html> 
+    <head> 
+        <title> 
+            Pagina de prueba de Google Maps en HTML5 
+        </title>
+        
+        <script type="text/javascript" 
+            src="http://maps.google.com/maps/api/js?sensor=false&key=AIzaSyA0LuN1DRsY3t3nNy44svx--g9U4CY6XH4"> 
+        </script>
+
+
+        <script type="text/javascript"> 
+        // Las variables 
+        var google_map; // objeto gGMaps 
+        var geocoder; // objeto Geocoder 
+        var dirn; // objeto DirectionsService 
+        var dir_disp; // objeto DirectionsRenderer 
+        // variable global que contiene los puntos 
+        var lista_de_puntos= new Array();
+        // Las funciones 
+        function mostrar_gmaps(){
+            // creación del mapa 
+            google_map = new google.maps.Map(document.getElementById("map")); 
+            // creación del geocoder 
+            geocoder =new google.maps.Geocoder(); 
+            // para el cálculo de las distancias 
+            dirn = new google.maps.DirectionsService(); 
+            dir_disp=new google.maps.DirectionsRenderer(); 
+            dir_disp.setMap(google_map);
+            // posicionamiento en Paris 
+            var punto = new google.maps.LatLng(46.98025,3.66943); 
+            google_map.setCenter(punto);
+            google_map.setMapTypeId(google.maps.MapTypeId.ROADMAP);
+            google_map.setZoom(5);
+        }
+
+        function Mostrar_ciudad() { 
+            // Recuperación del campo que lleva el ID "Nombre_ciudad" 
+            var objeto = document.getElementById('Nombre_ciudad');
+            // Si el objeto existe entonces se le busca 
+            if(objeto) { 
+                // Recuperación del valor del campo que lleva el ID "Nombre_ciudad" 
+                var nombre_ciudad = objeto.value; 
+                // Buscar la ciudad 
+                Buscar_Agregar_Punto(nombre_ciudad); 
+            } 
+        }
+
+        function Buscar_Agregar_Punto(direccion){
+            geocoder.geocode({address: direccion}, Agregar_punto_en_el_mapa);
+        }
+
+        function Agregar_punto_en_el_mapa(results,status){
+
+            if(status == google.maps.GeocoderStatus.OK){
+                var lugar=results[0].geometry;
+                google_map.setZoom(8);
+                google_map.setCenter(lugar.location);
+
+                var marker = new google.maps.Marker({ map: google_map, position: lugar.location});
+
+                lista_de_puntos[lista_de_puntos]=marker;
+            }
+            else{
+                alert("Geocode ha fallado por la razon: " + status);
+            }
+        }
+
+        // Esta función permite mostrar un itinerario en un mapa 
+        // y el total de kilómetros que separan a estas ciudades 
+        function Mostrar_itinerario(/*ciudad_partida, ciudad_llegada*/) { 
+        //el código de la función 
+                /*var nombre_ciudad_partida = "";
+                var nombre_ciudad_llegada = "";*/
+            /*if(ciudad_partida == "" && ciudad_llegada == "")
+            {*/
+                var objeto_partida=document.getElementById("Nombre_ciudad_partida");
+                var nombre_ciudad_partida = objeto_partida.value;
+                var objeto_llegada=document.getElementById("Nombre_ciudad_llegada");
+                var nombre_ciudad_llegada=objeto_llegada.value;
+            /*}
+            else{
+                var nombre_ciudad_partida = ciudad_partida;
+                var nombre_ciudad_llegada = ciudad_llegada;
+            }*/
+
+            var request = {origin:nombre_ciudad_partida, destination:nombre_ciudad_llegada,travelMode: google.maps.DirectionsTravelMode.DRIVING};
+            
+            dirn.route(request, leer_distancia);
+        }  
+
+        function leer_distancia(response, status){
+            if(status == google.maps.DirectionsStatus.OK){
+                
+                dir_disp.setDirections(response);
+
+                var distance = 0;
+                var myroute = response.routes[0];
+                for(i = 0; i < myroute.legs.length; i++)
+                {
+                    distance += myroute.legs[i].distance.value;
+                }
+                distance = distance / 1000;
+                var objet_kilometres=document.getElementById('Distancia');
+                if(objet_kilometres!=null)
+                objet_kilometres.value = distance + " kilometros ";
+            }
+
+        }
+
+        // Esta función permite mostrar en un mapa Google Maps, 
+        // un punto correspondiente a las coordenadas x y y 
+        function Mostrar_Coordenadas(/*coordX,coordY*/) { 
+            var objeto_x=document.getElementById("Coor_x");
+            var valor_x = objeto_x.value;
+
+            var objeto_y=document.getElementById("Coor_y");
+            var valor_y = objeto_y.value;
+
+            var marker = new google.maps.Marker(
+            {
+                position: new google.maps.LatLng(valor_x,valor_y),
+                map: google_map,
+                title:"Coordenadas : "+valor_x+","+valor_y
+            }
+            );
+
+            google_map.setZoom(8);
+            google_map.setCenter(marker.getPosition());
+
+            lista_de_puntos[lista_de_puntos.length]=marker;
+        }
+
+        function Punto_vacio(){
+            var i;
+
+            for(i=0;i<lista_de_puntos.length;i++)
+                lista_de_puntos[i].setMap(null);
+            
+            lista_de_puntos.length = 0;
+
+            dir_disp.setMap(null);
+            dir_disp=new google.maps.DirectionsRenderer();
+            dir_disp.setMap(google_map);
+        }
+        </script> 
+
+    </head> 
+    <body onload="mostrar_gmaps()"> 
+        <div id="main">
+            <div id="map" style="width: 900px; height: 600px"></div>
+        </div>
+        <div id="primero">
+            <input type="button" value=" --------- Borrar ---------"  onclick='Punto_vacio();' />
+        </div>
+
+        <div id="segundo">
+            <input id="Nombre_ciudad" value="????"/>
+            <input type="button" value="Mostrar la ciudad"  onClick="Mostrar_ciudad();" />
+        </div>
+        
+        <div id="tercero">
+            <input id="Nombre_ciudad_partida" value="????"/>
+            <input id="Nombre_ciudad_llegada" value="????"/>
+            <input id="Distancia" value="????"/>
+            <input type="button" value="Mostrar el itinerario"  onclick='Mostrar_itinerario();' />
+        </div>
+
+        <div id="cuarto">
+            <input id="Coor_x" value="43.36"/>
+            <input id="Coor_y" value="1.26"/>
+            <input type="button" value="Mostrar las coordenadas"  onclick='Mostrar_Coordenadas();'/>
+        </div>
+    </body> 
+</html>
+
